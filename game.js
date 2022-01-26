@@ -1,9 +1,17 @@
 const container = document.querySelector('.container');
+
 const rows = 25;
 const cols = 70;
 const pixel = 10;
 
+let currentChar = [
+	[24,0],
+	[23,0],
+	[22,0],
+];
+
 let pixelMap = new Map();
+let createKey = (i, j) => i + '-' + j;
 
 function drawCanvas() {
 	for (let i = 0; i < rows; i++) {
@@ -17,7 +25,7 @@ function drawCanvas() {
 			cpx.style.height = pixel + "px";
 			cpx.style.border = "1px solid #ddd";
 
-			let pos = i + '_' + j;
+			let pos = createKey(i, j);
 			cpx.classList.add(pos);
 			pixelMap.set(pos, cpx);
 			container.appendChild(cpx);
@@ -28,16 +36,16 @@ function drawCanvas() {
 function drawChar(char) {
 	let charPos = new Set();
 
-	for (let [x, y] of char) {
-		let pos = x + '_' + y;
+	for (let [t, l] of char) {
+		let pos = createKey(t, l)
 		charPos.add(pos);
 	}
 
 	for (let i = 0; i < rows; i++) {
-		for (let j = 0; j < cols; j++) { 
-			let pos = i + '_' + j;
+		for (let j = 0; j < cols; j++) {
+			let pos = createKey(i, j);
 			let cpx = pixelMap.get(pos);
-			cpx.style.background = 
+			cpx.style.background =
 				charPos.has(pos) ?
 				'black' :
 				'white'
@@ -45,13 +53,8 @@ function drawChar(char) {
 	}
 }
 
-let currentChar = [
-	[24,0],
-	[23,0],
-	[22,0],
-];
 
-const moveUp = ([t, l]) => [t - 1, l] 
+const moveUp = ([t, l]) => [t - 1, l]
 const moveDown = ([t, l]) => [t + 1, l];
 const moveRight = ([t, l]) => [t, l + 1];
 const moveLeft = ([t, l]) => [t, l - 1];
@@ -82,20 +85,29 @@ function move(direction) {
 	console.log(currentChar);
 }
 
-drawCanvas();
-drawChar(currentChar);
+function detectWallCollision(currentChar, direction) {
+	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
+	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
+	if (currentChar[0][1] !== 69 && direction === 'right') move(direction);
+	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
+
+	return;
+}
 
 document.addEventListener('keydown', (e) => {
 	if (e.key === 'w' || e.key === 'W') {
-		move('up');
+		detectWallCollision(currentChar, 'up');
 	}
 	if (e.key === 's' || e.key === 'S') {
-		move('down');
+		detectWallCollision(currentChar, 'down');
 	}
 	if (e.key === 'a' || e.key === 'A') {
-		move('left');
+		detectWallCollision(currentChar, 'left');
 	}
 	if (e.key === 'd' || e.key === 'D') {
-		move('right');
+		detectWallCollision(currentChar, 'right');
 	}
 })
+
+drawCanvas();
+drawChar(currentChar);
