@@ -1,0 +1,11 @@
+.container {
+    width: 700px;
+    height: 250px;
+    border: 2px solid black;
+    position: relative;
+    box-sizing: content-box;
+}
+
+* {
+    box-sizing: border-box;
+}
