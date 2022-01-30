@@ -9,19 +9,33 @@ let currentChar = [
 	[23,0],
 	[22,0],
 ];
-let currentObs = generateObstacle();
+
+// TODO: repeatedly create new obstacles
+let currentObstacles;
 let [charPixelMap, obsPixelMap] = [new Map(), new Map()];
+
+const isInCanvas = (current) => current[1] >= 0;
 const toKey = ([i, j]) => i + '-' + j;
-
-function generateObstacle() {
-	let randomPixelT = Math.floor(Math.random() * 24);
-	return [randomPixelT, 69];
-}
-
 const moveUp = ([t, l]) => [t - 1, l]
 const moveDown = ([t, l]) => [t + 1, l];
 const moveRight = ([t, l]) => [t, l + 1];
 const moveLeft = ([t, l]) => [t, l - 1];
+
+function createObstacles() {
+	let randomObstacleCount = Math.floor(Math.random() * 7 + 1);
+	currentObstacles = [];
+
+	for (let i = 0; i < randomObstacleCount; i++) {
+		currentObstacles.push(genObstaclePos());
+	}
+
+	return currentObstacles;
+}
+
+function genObstaclePos() {
+	let randomPixelT = Math.floor(Math.random() * 24);
+	return [randomPixelT, 69];
+}
 
 function drawCanvas() {
 	for (let i = 0; i < rows; i++) {
@@ -44,25 +58,23 @@ function drawCanvas() {
 	}
 }
 
-function mapToSet(type, set) {
+createObstacles();
+drawCanvas();
+
+function toSet(type, set) {
 	for (let cell of type) {
-		let pos = toKey(cell)
-		set.add(pos);
+		set.add(toKey(cell));
 	}
+
+	return set;
 }
 
-function renderColor(type, set, pos) {
-	return type.style.background =
-		set.has(pos) ?
-		'black' :
-		'white'
-}
+function draw(char, obstacle) {
+	let charPositions = new Set();
+	let obsPositions = new Set();
 
-function draw(char) {
-	let charPos = new Set();
-	let obsPos = toKey(currentObs);
-
-	mapToSet(char, charPos);
+	toSet(char, charPositions);
+	toSet(obstacle, obsPositions);
 
 	for (let i = 0; i < rows; i++) {
 		for (let j = 0; j < cols; j++) {
@@ -70,9 +82,9 @@ function draw(char) {
 			let cpx = charPixelMap.get(pos);
 			let background = 'white';
 
-			if (pos === obsPos) {
+			if (obsPositions.has(pos))	 {
 				background = 'red';
-			} else if (charPos.has(pos)) {
+			} else if (charPositions.has(pos)) {
 				background = 'black';
 			}
 
@@ -82,7 +94,7 @@ function draw(char) {
 }
 
 function iterateChar(moveDirection) {
-	currentChar.forEach((el, i) => {
+	return currentChar.forEach((el, i) => {
 		currentChar[i] = moveDirection(el)
 	});
 }
@@ -131,13 +143,22 @@ document.addEventListener('keydown', (e) => {
 	}
 })
 
-drawCanvas();
-setInterval(() => {
-	draw(currentChar);
-	currentObs = moveLeft(currentObs);
-}, 400);
+function shiftObstacles(obstacle) {
+	let shiftedObstacles = [];
 
+	for (let cell of obstacle) {
+		shiftedObstacles.push(moveLeft(cell));
+	}
 
+	return shiftedObstacles;
+}
 
+function startGame() {
+	if (currentObstacles.every(isInCanvas)) {
+		currentObstacles = shiftObstacles(currentObstacles);
+	}
 
+	return draw(currentChar, currentObstacles);
+}
 
+setInterval(startGame, 100);
