@@ -4,14 +4,14 @@ const rows = 25;
 const cols = 70;
 const pixel = 10;
 
-// TODO: lets not mutate this, but refer to it as a starting point
 let currentChar = [
 	[24,0],
 	[23,0],
 	[22,0],
 ];
+let currentObs = generateObstacle();
 let [charPixelMap, obsPixelMap] = [new Map(), new Map()];
-const createKey = (i, j) => i + '-' + j;
+const toKey = ([i, j]) => i + '-' + j;
 
 function generateObstacle() {
 	let randomPixelT = Math.floor(Math.random() * 24);
@@ -35,18 +35,18 @@ function drawCanvas() {
 			cpx.style.height = pixel + "px";
 			cpx.style.border = "1px solid #ddd";
 
-			let pos = createKey(i, j);
+			let pos = toKey([i, j]);
 			cpx.classList.add(pos);
 			charPixelMap.set(pos, cpx);
-			//obsPixelMap.set(generateObstacle(), cpx);
+			obsPixelMap.set(pos, cpx);
 			container.appendChild(cpx);
 		}
 	}
 }
 
 function mapToSet(type, set) {
-	for (let [t, l] of type) {
-		let pos = createKey(t, l)
+	for (let cell of type) {
+		let pos = toKey(cell)
 		set.add(pos);
 	}
 }
@@ -58,21 +58,25 @@ function renderColor(type, set, pos) {
 		'white'
 }
 
-function draw(char, obstacle) {
-	let [charPos, obsPos] = [new Set(), new Set()];
+function draw(char) {
+	let charPos = new Set();
+	let obsPos = toKey(currentObs);
 
-	// TODO: draw random obstacles to avoid
-	// - obstacles will only move from right to left
 	mapToSet(char, charPos);
-	//mapToSet(obstacle, obsPos);
 
 	for (let i = 0; i < rows; i++) {
 		for (let j = 0; j < cols; j++) {
-			let pos = createKey(i, j);
-			let charCpx = charPixelMap.get(pos);
-			let obsCpx = charPixelMap.get(pos);
+			let pos = toKey([i, j]);
+			let cpx = charPixelMap.get(pos);
+			let background = 'white';
 
-			renderColor(charCpx, charPos, pos);
+			if (pos === obsPos) {
+				background = 'red';
+			} else if (charPos.has(pos)) {
+				background = 'black';
+			}
+
+			cpx.style.background = background;
 		}
 	}
 }
@@ -130,7 +134,8 @@ document.addEventListener('keydown', (e) => {
 drawCanvas();
 setInterval(() => {
 	draw(currentChar);
-}, 500);
+	currentObs = moveLeft(currentObs);
+}, 400);
 
 
 
