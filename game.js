@@ -12,6 +12,7 @@ let currentChar = [
 let currentObstacles = [];
 let obstaclePasses = 0;
 let pixelMap = new Map();
+let paused;
 
 const toKey = ([i, j]) => i + '-' + j;
 const moveUp = ([t, l]) => [t - 1, l]
@@ -132,20 +133,27 @@ function detectWallCollision(currentChar, direction) {
 	return;
 }
 
-document.addEventListener('keydown', (e) => {
-	if (e.key === 'w' || e.key === 'W') {
-		detectWallCollision(currentChar, 'up');
-	}
-	if (e.key === 's' || e.key === 'S') {
-		detectWallCollision(currentChar, 'down');
-	}
-	if (e.key === 'a' || e.key === 'A') {
-		detectWallCollision(currentChar, 'left');
-	}
-	if (e.key === 'd' || e.key === 'D') {
-		detectWallCollision(currentChar, 'right');
-	}
-})
+function setKeyBindings() {
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'w' || e.key === 'W') {
+			detectWallCollision(currentChar, 'up');
+		}
+		if (e.key === 's' || e.key === 'S') {
+			detectWallCollision(currentChar, 'down');
+		}
+		if (e.key === 'a' || e.key === 'A') {
+			detectWallCollision(currentChar, 'left');
+		}
+		if (e.key === 'd' || e.key === 'D') {
+			detectWallCollision(currentChar, 'right');
+		}
+		if (e.key === ' ' || e.key === 'Spacebar') {
+			if (paused === true) return paused = false;
+
+			paused = true;
+		}
+	})
+}
 
 function shiftObstacles(obstacle) {
 	let shiftedObstacles = [];
@@ -157,11 +165,13 @@ function shiftObstacles(obstacle) {
 	return shiftedObstacles;
 }
 
-function startGame() {
+function step() {
+	if (paused === true) return;
 	let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
 	currentObstacles = shiftObstacles(obstaclesInCanvas);
 
 	return draw(currentChar, currentObstacles);
 }
 
-setInterval(startGame, 100);
+setKeyBindings();
+setInterval(step, 100);
