@@ -9,21 +9,19 @@ let currentChar = [
 	[23,0],
 	[22,0],
 ];
+let currentObstacles = [];
+let obstaclePasses = 0;
+let pixelMap = new Map();
 
-// TODO: repeatedly create new obstacles
-let currentObstacles;
-let [charPixelMap, obsPixelMap] = [new Map(), new Map()];
-
-const isInCanvas = (current) => current[1] >= 0;
 const toKey = ([i, j]) => i + '-' + j;
 const moveUp = ([t, l]) => [t - 1, l]
 const moveDown = ([t, l]) => [t + 1, l];
 const moveRight = ([t, l]) => [t, l + 1];
 const moveLeft = ([t, l]) => [t, l - 1];
+const getObstaclesInCanvas = (currentObstacle) => currentObstacle[1] >= 0;
 
 function createObstacles() {
 	let randomObstacleCount = Math.floor(Math.random() * 7 + 1);
-	currentObstacles = [];
 
 	for (let i = 0; i < randomObstacleCount; i++) {
 		currentObstacles.push(genObstaclePos());
@@ -51,8 +49,7 @@ function drawCanvas() {
 
 			let pos = toKey([i, j]);
 			cpx.classList.add(pos);
-			charPixelMap.set(pos, cpx);
-			obsPixelMap.set(pos, cpx);
+			pixelMap.set(pos, cpx);
 			container.appendChild(cpx);
 		}
 	}
@@ -70,6 +67,11 @@ function toSet(type, set) {
 }
 
 function draw(char, obstacle) {
+	if (obstaclePasses === 10) {
+		obstaclePasses = 0;
+		createObstacles();
+	}
+
 	let charPositions = new Set();
 	let obsPositions = new Set();
 
@@ -79,7 +81,7 @@ function draw(char, obstacle) {
 	for (let i = 0; i < rows; i++) {
 		for (let j = 0; j < cols; j++) {
 			let pos = toKey([i, j]);
-			let cpx = charPixelMap.get(pos);
+			let cpx = pixelMap.get(pos);
 			let background = 'white';
 
 			if (obsPositions.has(pos))	 {
@@ -91,6 +93,8 @@ function draw(char, obstacle) {
 			cpx.style.background = background;
 		}
 	}
+
+	obstaclePasses++;
 }
 
 function iterateChar(moveDirection) {
@@ -154,9 +158,8 @@ function shiftObstacles(obstacle) {
 }
 
 function startGame() {
-	if (currentObstacles.every(isInCanvas)) {
-		currentObstacles = shiftObstacles(currentObstacles);
-	}
+	let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
+	currentObstacles = shiftObstacles(obstaclesInCanvas);
 
 	return draw(currentChar, currentObstacles);
 }
