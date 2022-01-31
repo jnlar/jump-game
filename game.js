@@ -4,6 +4,9 @@ const rows = 25;
 const cols = 70;
 const pixel = 10;
 
+let paused;
+let charPositions;
+let obsPositions;
 let currentChar = [
 	[24,0],
 	[23,0],
@@ -12,7 +15,6 @@ let currentChar = [
 let currentObstacles = [];
 let obstaclePasses = 0;
 let pixelMap = new Map();
-let paused;
 
 const toKey = ([i, j]) => i + '-' + j;
 const moveUp = ([t, l]) => [t - 1, l]
@@ -73,8 +75,8 @@ function draw(char, obstacle) {
 		createObstacles();
 	}
 
-	let charPositions = new Set();
-	let obsPositions = new Set();
+	charPositions = new Set();
+	obsPositions = new Set();
 
 	toSet(char, charPositions);
 	toSet(obstacle, obsPositions);
@@ -133,6 +135,19 @@ function detectWallCollision(currentChar, direction) {
 	return;
 }
 
+function detectObstacleCollision(currentChar) {
+	for (let cell of currentChar) {
+		let pos = toKey(cell);
+		if (obsPositions) {
+			if (obsPositions.has(pos)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 function setKeyBindings() {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'w' || e.key === 'W') {
@@ -167,10 +182,13 @@ function shiftObstacles(obstacle) {
 
 function step() {
 	if (paused === true) return;
-	let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
-	currentObstacles = shiftObstacles(obstaclesInCanvas);
 
-	return draw(currentChar, currentObstacles);
+	if (!detectObstacleCollision(currentChar)) {
+		let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
+		currentObstacles = shiftObstacles(obstaclesInCanvas);
+
+		return draw(currentChar, currentObstacles);
+	}
 }
 
 setKeyBindings();
