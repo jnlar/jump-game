@@ -7,6 +7,7 @@ const pixel = 10;
 let paused;
 let charPositions;
 let obsPositions;
+let hitObstacle;
 let currentChar = [
 	[24,0],
 	[23,0],
@@ -22,21 +23,6 @@ const moveDown = ([t, l]) => [t + 1, l];
 const moveRight = ([t, l]) => [t, l + 1];
 const moveLeft = ([t, l]) => [t, l - 1];
 const getObstaclesInCanvas = (currentObstacle) => currentObstacle[1] >= 0;
-
-function createObstacles() {
-	let randomObstacleCount = Math.floor(Math.random() * 7 + 1);
-
-	for (let i = 0; i < randomObstacleCount; i++) {
-		currentObstacles.push(genObstaclePos());
-	}
-
-	return currentObstacles;
-}
-
-function genObstaclePos() {
-	let randomPixelT = Math.floor(Math.random() * 24);
-	return [randomPixelT, 69];
-}
 
 function drawCanvas() {
 	for (let i = 0; i < rows; i++) {
@@ -56,96 +42,6 @@ function drawCanvas() {
 			container.appendChild(cpx);
 		}
 	}
-}
-
-createObstacles();
-drawCanvas();
-
-function toSet(type, set) {
-	for (let cell of type) {
-		set.add(toKey(cell));
-	}
-
-	return set;
-}
-
-function draw(char, obstacle) {
-	if (obstaclePasses === 10) {
-		obstaclePasses = 0;
-		createObstacles();
-	}
-
-	charPositions = new Set();
-	obsPositions = new Set();
-
-	toSet(char, charPositions);
-	toSet(obstacle, obsPositions);
-
-	for (let i = 0; i < rows; i++) {
-		for (let j = 0; j < cols; j++) {
-			let pos = toKey([i, j]);
-			let cpx = pixelMap.get(pos);
-			let background = 'white';
-
-			if (obsPositions.has(pos))	 {
-				background = 'red';
-			} else if (charPositions.has(pos)) {
-				background = 'black';
-			}
-
-			cpx.style.background = background;
-		}
-	}
-
-	obstaclePasses++;
-}
-
-function iterateChar(moveDirection) {
-	return currentChar.forEach((el, i) => {
-		currentChar[i] = moveDirection(el)
-	});
-}
-
-function move(direction) {
-	switch (direction) {
-		case 'up':
-			iterateChar(moveUp);
-			break;
-		case 'down':
-			iterateChar(moveDown);
-			break;
-		case 'left':
-			iterateChar(moveLeft);
-			break;
-		case 'right':
-			iterateChar(moveRight);
-			break;
-	}
-
-	draw(currentChar);
-}
-
-// TODO: implement obstacle collision detection
-function detectWallCollision(currentChar, direction) {
-	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
-	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
-	if (currentChar[0][1] !== 69 && direction === 'right') move(direction);
-	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
-
-	return;
-}
-
-function detectObstacleCollision(currentChar) {
-	for (let cell of currentChar) {
-		let pos = toKey(cell);
-		if (obsPositions) {
-			if (obsPositions.has(pos)) {
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 function setKeyBindings() {
@@ -170,6 +66,105 @@ function setKeyBindings() {
 	})
 }
 
+function genObstaclePos() {
+	let randomPixelT = Math.floor(Math.random() * 24);
+	return [randomPixelT, 69];
+}
+
+function createObstacles() {
+	let randomObstacleCount = Math.floor(Math.random() * 7 + 1);
+
+	for (let i = 0; i < randomObstacleCount; i++) {
+		currentObstacles.push(genObstaclePos());
+	}
+
+	return currentObstacles;
+}
+
+setKeyBindings();
+createObstacles();
+drawCanvas();
+
+function toSet(type, set) {
+	for (let cell of type) {
+		set.add(toKey(cell));
+	}
+
+	return set;
+}
+
+function iterateChar(moveDirection) {
+	return currentChar.forEach((el, i) => {
+		currentChar[i] = moveDirection(el)
+	});
+}
+
+function draw(char, obstacle) {
+	if (hitObstacle) return;
+
+	charPositions = new Set();
+	obsPositions = new Set();
+
+	toSet(char, charPositions);
+	toSet(obstacle, obsPositions);
+
+	for (let i = 0; i < rows; i++) {
+		for (let j = 0; j < cols; j++) {
+			let pos = toKey([i, j]);
+			let cpx = pixelMap.get(pos);
+			let background = 'white';
+
+			if (obsPositions.has(pos))	 {
+				background = 'red';
+			} else if (charPositions.has(pos)) {
+				background = 'black';
+			}
+
+			cpx.style.background = background;
+		}
+	}
+}
+
+function move(direction) {
+	switch (direction) {
+		case 'up':
+			iterateChar(moveUp);
+			break;
+		case 'down':
+			iterateChar(moveDown);
+			break;
+		case 'left':
+			iterateChar(moveLeft);
+			break;
+		case 'right':
+			iterateChar(moveRight);
+			break;
+	}
+
+	draw(currentChar);
+}
+
+function detectWallCollision(currentChar, direction) {
+	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
+	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
+	if (currentChar[0][1] !== 69 && direction === 'right') move(direction);
+	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
+
+	return;
+}
+
+function detectObstacleCollision(currentChar) {
+	for (let cell of currentChar) {
+		let pos = toKey(cell);
+
+		if (obsPositions && obsPositions.has(pos)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function shiftObstacles(obstacle) {
 	let shiftedObstacles = [];
 
@@ -180,16 +175,28 @@ function shiftObstacles(obstacle) {
 	return shiftedObstacles;
 }
 
-function step() {
-	if (paused === true) return;
+function obstacleStep() {
+	if (!paused === true) {
 
-	if (!detectObstacleCollision(currentChar)) {
 		let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
 		currentObstacles = shiftObstacles(obstaclesInCanvas);
 
-		return draw(currentChar, currentObstacles);
+		if (obstaclePasses === 10) {
+			obstaclePasses = 0;
+			createObstacles();
+		}
+
+		obstaclePasses++;
 	}
 }
 
-setKeyBindings();
-setInterval(step, 100);
+function characterStep() {
+	if (!detectObstacleCollision(currentChar) && !hitObstacle) {
+		return draw(currentChar, currentObstacles);
+	}
+
+	return hitObstacle = true;
+}
+
+setInterval(obstacleStep, 100);
+setInterval(characterStep, 1);
