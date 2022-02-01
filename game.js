@@ -8,14 +8,11 @@ let paused;
 let charPositions;
 let obsPositions;
 let hitObstacle;
-let currentChar = [
-	[24,0],
-	[23,0],
-	[22,0],
-];
-let currentObstacles = [];
-let obstaclePasses = 0;
-let pixelMap = new Map();
+let currentChar;
+let currentObstacles;
+let gameStarted;
+let obstaclePasses;
+let pixelMap;
 
 const toKey = ([i, j]) => i + '-' + j;
 const moveUp = ([t, l]) => [t - 1, l]
@@ -34,7 +31,6 @@ function drawCanvas() {
 			cpx.style.left = j * pixel + "px";
 			cpx.style.width = pixel + "px";
 			cpx.style.height = pixel + "px";
-			cpx.style.border = "1px solid #ddd";
 
 			let pos = toKey([i, j]);
 			cpx.classList.add(pos);
@@ -44,26 +40,54 @@ function drawCanvas() {
 	}
 }
 
+function initGame() {
+	gameStarted = true;
+	currentChar = [
+		[24,0],
+		[23,0],
+		[22,0],
+	];
+	currentObstacles = [];
+	paused = false;
+	hitObstacle = false;
+	obstaclePasses = 0;
+	pixelMap = new Map();
+	setKeyBindings();
+	createObstacles();
+	return drawCanvas();
+}
+
 function setKeyBindings() {
+	let keys = {
+		up: false,
+		down: false,
+		left: false,
+		right: false
+	}
+
 	document.addEventListener('keydown', (e) => {
-		if (e.key === 'w' || e.key === 'W') {
+		if (e.key === 'w') {
 			detectWallCollision(currentChar, 'up');
 		}
-		if (e.key === 's' || e.key === 'S') {
+		if (e.key === 's') {
 			detectWallCollision(currentChar, 'down');
 		}
-		if (e.key === 'a' || e.key === 'A') {
+		if (e.key === 'a') {
 			detectWallCollision(currentChar, 'left');
 		}
-		if (e.key === 'd' || e.key === 'D') {
+		if (e.key === 'd') {
 			detectWallCollision(currentChar, 'right');
 		}
 		if (e.key === ' ' || e.key === 'Spacebar') {
-			if (paused === true) return paused = false;
+			if (paused) return paused = false;
 
 			paused = true;
 		}
 	})
+
+	document.addEventListener('keyup', () => {
+		Object.keys(keys).map(key => keys[key] = false)
+	});
 }
 
 function genObstaclePos() {
@@ -81,9 +105,6 @@ function createObstacles() {
 	return currentObstacles;
 }
 
-setKeyBindings();
-createObstacles();
-drawCanvas();
 
 function toSet(type, set) {
 	for (let cell of type) {
@@ -145,12 +166,11 @@ function move(direction) {
 }
 
 function detectWallCollision(currentChar, direction) {
-	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
-	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
-	if (currentChar[0][1] !== 69 && direction === 'right') move(direction);
-	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
-
-	return;
+	if (paused) return;
+	if (currentChar[2][0] !== 0 && direction === 'up') return move(direction);
+	if (currentChar[0][0] !== 24 && direction == 'down') return move(direction);
+	if (currentChar[0][1] !== 69 && direction === 'right') return move(direction)
+	if (currentChar[0][1] !== 0 && direction == 'left') return move(direction);
 }
 
 function detectObstacleCollision(currentChar) {
@@ -176,21 +196,21 @@ function shiftObstacles(obstacle) {
 }
 
 function obstacleStep() {
-	if (!paused === true) {
+	if (paused) return;
 
-		let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
-		currentObstacles = shiftObstacles(obstaclesInCanvas);
+	let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
+	currentObstacles = shiftObstacles(obstaclesInCanvas);
 
-		if (obstaclePasses === 10) {
-			obstaclePasses = 0;
-			createObstacles();
-		}
-
-		obstaclePasses++;
+	if (obstaclePasses === 10) {
+		obstaclePasses = 0;
+		createObstacles();
 	}
+
+	obstaclePasses++;
 }
 
 function characterStep() {
+	if (!gameStarted) return initGame();
 	if (!detectObstacleCollision(currentChar) && !hitObstacle) {
 		return draw(currentChar, currentObstacles);
 	}
@@ -200,3 +220,5 @@ function characterStep() {
 
 setInterval(obstacleStep, 100);
 setInterval(characterStep, 1);
+// yeah I know... this is bad
+window.onerror = () => true;
