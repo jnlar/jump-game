@@ -66,16 +66,32 @@ function setKeyBindings() {
 	}
 
 	document.addEventListener('keydown', (e) => {
+		if (keys.up && keys.right) {
+			detectWallCollision(currentChar, 'upright');
+		}
+		if (keys.up && keys.left) {
+			detectWallCollision(currentChar, 'upleft');
+		}
+		if (keys.down && keys.right) {
+			detectWallCollision(currentChar, 'downright');
+		}
+		if (keys.down && keys.left) {
+			detectWallCollision(currentChar, 'downleft');
+		}
 		if (e.key === 'w') {
+			keys.up = true;
 			detectWallCollision(currentChar, 'up');
 		}
 		if (e.key === 's') {
+			keys.down = true;
 			detectWallCollision(currentChar, 'down');
 		}
 		if (e.key === 'a') {
+			keys.left = true;
 			detectWallCollision(currentChar, 'left');
 		}
 		if (e.key === 'd') {
+			keys.right = true;
 			detectWallCollision(currentChar, 'right');
 		}
 		if (e.key === ' ' || e.key === 'Spacebar') {
@@ -104,7 +120,6 @@ function createObstacles() {
 
 	return currentObstacles;
 }
-
 
 function toSet(type, set) {
 	for (let cell of type) {
@@ -160,6 +175,22 @@ function move(direction) {
 		case 'right':
 			iterateChar(moveRight);
 			break;
+		case 'upright':
+			iterateChar(moveUp);
+			iterateChar(moveRight);
+			break;
+		case 'upleft':
+			iterateChar(moveUp);
+			iterateChar(moveLeft);
+			break;
+		case 'downright':
+			iterateChar(moveDown);
+			iterateChar(moveRight);
+			break;
+		case 'downleft':
+			iterateChar(moveDown);
+			iterateChar(moveLeft);
+			break;
 	}
 
 	draw(currentChar);
@@ -167,10 +198,30 @@ function move(direction) {
 
 function detectWallCollision(currentChar, direction) {
 	if (paused) return;
-	if (currentChar[2][0] !== 0 && direction === 'up') return move(direction);
-	if (currentChar[0][0] !== 24 && direction == 'down') return move(direction);
-	if (currentChar[0][1] !== 69 && direction === 'right') return move(direction)
-	if (currentChar[0][1] !== 0 && direction == 'left') return move(direction);
+	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
+	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
+	if (currentChar[0][1] !== 69 && direction === 'right') move(direction)
+	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
+	if (
+		currentChar[2][0] !== 0
+		&& currentChar[0][1] !== 69
+		&& direction === 'upright'
+		) move(direction);
+	if (
+		currentChar[2][0] !== 0
+		&& currentChar[0][1] !== 0
+		&& direction === 'upleft'
+		) move(direction);
+	if (
+		currentChar[0][0] !== 24
+		&& currentChar[0][1] !== 69
+		&& direction === 'downright'
+		) move(direction);
+	if (
+		currentChar[0][0] !== 24
+		&& currentChar[0][1] !== 0
+		&& direction === 'downleft'
+		) move(direction);
 }
 
 function detectObstacleCollision(currentChar) {
