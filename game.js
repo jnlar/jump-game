@@ -1,4 +1,6 @@
 const container = document.querySelector('.container');
+const debugObs = document.getElementById('debug-obs');
+const debugChr = document.getElementById('debug-chr');
 
 const rows = 25;
 const cols = 70;
@@ -78,19 +80,19 @@ function setKeyBindings() {
 		if (keys.down && keys.left) {
 			detectWallCollision(currentChar, 'downleft');
 		}
-		if (e.key === 'w') {
+		if (e.key === 'w' || e.key === 'ArrowUp') {
 			keys.up = true;
 			detectWallCollision(currentChar, 'up');
 		}
-		if (e.key === 's') {
+		if (e.key === 's' || e.key === 'ArrowDown') {
 			keys.down = true;
 			detectWallCollision(currentChar, 'down');
 		}
-		if (e.key === 'a') {
+		if (e.key === 'a' || e.key === 'ArrowLeft') {
 			keys.left = true;
 			detectWallCollision(currentChar, 'left');
 		}
-		if (e.key === 'd') {
+		if (e.key === 'd' || e.key === 'ArrowRight') {
 			keys.right = true;
 			detectWallCollision(currentChar, 'right');
 		}
@@ -151,9 +153,9 @@ function draw(char, obstacle) {
 			let background = 'white';
 
 			if (obsPositions.has(pos))	 {
-				background = 'red';
+				background = 'orange';
 			} else if (charPositions.has(pos)) {
-				background = 'black';
+				background = 'blue';
 			}
 
 			cpx.style.background = background;
@@ -198,30 +200,30 @@ function move(direction) {
 
 function detectWallCollision(currentChar, direction) {
 	if (paused) return;
-	if (currentChar[2][0] !== 0 && direction === 'up') move(direction);
-	if (currentChar[0][0] !== 24 && direction == 'down') move(direction);
-	if (currentChar[0][1] !== 69 && direction === 'right') move(direction)
-	if (currentChar[0][1] !== 0 && direction == 'left') move(direction);
+	if (currentChar[2][0] !== 0 && direction === 'up') return move(direction);
+	if (currentChar[0][0] !== 24 && direction == 'down') return move(direction);
+	if (currentChar[0][1] !== 69 && direction === 'right') return move(direction)
+	if (currentChar[0][1] !== 0 && direction == 'left') return move(direction);
 	if (
 		currentChar[2][0] !== 0
 		&& currentChar[0][1] !== 69
 		&& direction === 'upright'
-		) move(direction);
+		) return move(direction);
 	if (
 		currentChar[2][0] !== 0
 		&& currentChar[0][1] !== 0
 		&& direction === 'upleft'
-		) move(direction);
+		) return move(direction);
 	if (
 		currentChar[0][0] !== 24
 		&& currentChar[0][1] !== 69
 		&& direction === 'downright'
-		) move(direction);
+		) return move(direction);
 	if (
 		currentChar[0][0] !== 24
 		&& currentChar[0][1] !== 0
 		&& direction === 'downleft'
-		) move(direction);
+		) return move(direction);
 }
 
 function detectObstacleCollision(currentChar) {
@@ -247,9 +249,13 @@ function shiftObstacles(obstacle) {
 }
 
 function obstacleStep() {
-	if (paused) return;
+	if (paused || hitObstacle) return;
 
+	debugObs.innerHTML = `<pre>ObstaclesInCanvas</pre> `
+	debugChr.innerHTML = `<pre>currentChar</pre> `
 	let obstaclesInCanvas = currentObstacles.filter(getObstaclesInCanvas);
+	obstaclesInCanvas.forEach((el, i) => debugObs.innerHTML += ` [${el}] `)
+	currentChar.forEach((el, i) => debugChr.innerHTML += ` [${el}] `)
 	currentObstacles = shiftObstacles(obstaclesInCanvas);
 
 	if (obstaclePasses === 10) {
